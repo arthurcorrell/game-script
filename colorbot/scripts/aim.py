@@ -19,20 +19,34 @@ user32, kernel32, shcore = (
     WinDLL("shcore", use_last_error=True),
 )
 
+# setup
+
 shcore.SetProcessDpiAwareness(2)
 xres, yres = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
 
 
-# setup - link w/ userinput GUI or .json
+
+
+# config - link w/ userinput GUI or .json
 
 x_fov = 128
 y_fov = 72
 
-lower = np.array([110, 20, 80], dtype='uint8') 
+lower = np.array([110, 20, 80], dtype='uint8') # color range for aim
 upper = np.array([250, 90, 250], dtype='uint8')
 
-hotkey = 'alt' # keybind for toggling
+b, g, r = (250, 100, 250) # trigger color
+color_tolerance = 70 # for trigger mask
+
+
+aim_hotkey = 'alt' 
+
+trigger_hotkey = 'mb5' 
+trigger_toggle = False # switch between toggle and hold modes
+
 quit_key = 'q' # keybind for quitting program
+
+
 
 
 
@@ -111,7 +125,7 @@ camera.start(region=region, target_fps=hz)
 
 
 while True:
-    if keyboard.is_pressed(hotkey):
+    if keyboard.is_pressed(aim_hotkey):
         if not activated: # one-time logic
             activated = True
             print('activated')
