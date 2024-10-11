@@ -46,11 +46,36 @@ activated = False # bool flag for on/off
 
 # function definitions
 
-def shut_down()
+def shut_down():
     try:
         sys.exit()
     except:
         raise SystemExit
+    
+def find_lowest_y(image, pt):
+    mask = cv2.inRange(image, lower, upper)
+    ret, thresh = cv2.threshold(mask, 40, 255, 0)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    lowest_y = float('inf')
+    lowest_point = None
+
+    for c in contours:
+        if cv2.contourArea(c) > 1:
+            x1, y1, w1, h1 = cv2.boundingRect(c)
+
+            point = (round(x1 + (w1 / 2)), round(y1 + (h1 / 2)))
+            
+            if y1 < lowest_y:
+                lowest_y = y1
+                lowest_point = point
+
+            # visual DEBUG
+            cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1) 
+
+    if lowest_point:
+        return lowest_point
+    return None
 
 # not in use - for later reference
 def find_closest_point(image, pt):
@@ -63,12 +88,22 @@ def find_closest_point(image, pt):
         if cv2.contourArea(c) > 1:  # Adjust size threshold as needed
             x1, y1, w1, h1 = cv2.boundingRect(c)
             close_points.append((round(x1 + (w1 / 2)), round(y1 + (h1 / 2))))
-            cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1)
+
+            # for visual debugging:
+            cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1) 
 
     if close_points:
         closest = close_points[scipy.spatial.KDTree(close_points).query(pt)[1]]
         return closest
     return None
+    '''
+        if closest is not None:
+            cv2.circle(thresh, (closest[0], closest[1]), radius=2, color=(255, 255, 255), thickness=-1)
+            cv2.line(thresh, pt, (closest[0], closest[1]), (255, 255, 255), 1)
+
+        resize = cv2.resize(thresh, (960, 540))
+        cv2.imshow('Real-Time Color Detection', resize)
+    '''
 
 
 # one-time start logic
@@ -85,28 +120,14 @@ while True:
         # loop logic
         image = camera.get_latest_frame()
 
-        #closest function
-        close_points = []
-        mask = cv2.inRange(image, lower, upper)
-        ret, thresh = cv2.threshold(mask, 40, 255, 0)
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        lowest_point = find_lowest_y(image, pt)
 
-        for c in contours:
-            if cv2.contourArea(c) > 1:  # Adjust size threshold as needed
-                x1, y1, w1, h1 = cv2.boundingRect(c)
-                close_points.append((round(x1 + (w1 / 2)), round(y1 + (h1 / 2))))
-                cv2.rectangle(thresh, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1)
-
-        if close_points:
-            closest = close_points[scipy.spatial.KDTree(close_points).query(pt)[1]]
-
-            if closest is not None:
-                cv2.circle(thresh, (closest[0], closest[1]), radius=2, color=(255, 255, 255), thickness=-1)
-                cv2.line(thresh, pt, (closest[0], closest[1]), (255, 255, 255), 1)
-
-        resize = cv2.resize(thresh, (960, 540))
+        # visual DEBUG
+        if lowest_point is not None:
+            cv2.circle(image, (lowest_point[0], lowest_point[1]), radius=2, color=(255, 255, 255), thickness=-1)
+            cv2.line(image, pt, (lowest_point[0], lowest_point[1]), (255, 255, 255), 1) 
+        resize = cv2.resize(image, (960, 540))
         cv2.imshow('Real-Time Color Detection', resize)
-
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -114,6 +135,8 @@ while True:
         if activated: # one-time logic
             activated = False
             print('deactivated')
+
+            # visual DEBUG
             cv2.destroyAllWindows()
 
 
