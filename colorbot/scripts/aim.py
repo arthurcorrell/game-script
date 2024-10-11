@@ -1,49 +1,58 @@
 import time
 import keyboard
+import json
+import threading
 
 import dxcam
 import numpy as np
 import cv2
 import scipy.spatial
-import win32api
 import serial
-# config - color ranges
 
-# purple
+import win32api
+import sys
+from ctypes import WinDLL
+
+user32, kernel32, shcore = (
+    WinDLL("user32", use_last_error=True),
+    WinDLL("kernel32", use_last_error=True),
+    WinDLL("shcore", use_last_error=True),
+)
+
+shcore.SetProcessDpiAwareness(2)
+xres, yres = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
+
+
+# setup - link w/ userinput GUI or .json
+
+x_fov = 128
+y_fov = 72
+
 lower = np.array([110, 20, 80], dtype='uint8') 
 upper = np.array([250, 90, 250], dtype='uint8')
 
+hotkey = 'alt' # keybind for toggling
+quit_key = 'q' # keybind for quitting program
 
 
-#self found
-#lower = np.array([82, 42, 105], dtype='uint8') 
-#upper = np.array([212, 145, 214], dtype='uint8')
 
-
-# setup - link w/ userinput
-
-xres = 2560
-yres = 1440
-
-xmult = 10
-ymult = 10
-
-
-width = int((1/xmult)* xres)
-height = int((1/ymult)* yres)
-
-pt = (width, height) # screen center; pointer position: # win32api.GetCursorPos()
-region = ((xres//2)-width, (yres//2)-height, (xres//2)+width, (yres//2)+height)
+pt = (x_fov, y_fov) # center of captured window; pointer position: # win32api.GetCursorPos()
+region = ((xres//2)-x_fov, (yres//2)-y_fov, (xres//2)+x_fov, (yres//2)+y_fov)
 
 camera = dxcam.create(output_color='BGR', max_buffer_len=64)
 hz = 60
 
 activated = False # bool flag for on/off
-hotkey = 'alt' # keybind for toggling
-quit_key = 'q' # keybind for quitting program
-
 
 # function definitions
+
+def shut_down()
+    try:
+        sys.exit()
+    except:
+        raise SystemExit
+
+# not in use - for later reference
 def find_closest_point(image, pt):
     close_points = []
     mask = cv2.inRange(image, lower, upper)
