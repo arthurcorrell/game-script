@@ -10,6 +10,7 @@ import scipy.spatial
 import serial
 
 import win32api
+import winsound
 import sys
 from ctypes import WinDLL
 
@@ -19,14 +20,6 @@ user32, kernel32, shcore = (
     WinDLL("shcore", use_last_error=True),
 )
 
-# setup
-
-shcore.SetProcessDpiAwareness(2)
-xres, yres = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
-
-
-
-
 # config - link w/ userinput GUI or .json
 
 x_fov = 128
@@ -35,11 +28,12 @@ y_fov = 72
 lower = np.array([110, 20, 80], dtype='uint8') # color range for aim
 upper = np.array([250, 90, 250], dtype='uint8')
 
+
 b, g, r = (250, 100, 250) # trigger color
 color_tolerance = 70 # for trigger mask
 
 
-aim_hotkey = 'alt' 
+aim_hotkey =  int("0x12",16)
 
 trigger_hotkey = 'mb5' 
 trigger_toggle = False # switch between toggle and hold modes
@@ -47,20 +41,26 @@ trigger_toggle = False # switch between toggle and hold modes
 quit_key = 'q' # keybind for quitting program
 
 
+# setup
 
-
+shcore.SetProcessDpiAwareness(2)
+xres, yres = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
 
 pt = (x_fov, y_fov) # center of captured window; pointer position: # win32api.GetCursorPos()
 region = ((xres//2)-x_fov, (yres//2)-y_fov, (xres//2)+x_fov, (yres//2)+y_fov)
 
+
+# initalization
+
 camera = dxcam.create(output_color='BGR', max_buffer_len=64)
 hz = 60
+camera.start(region=region, target_fps=hz)
 
 activated = False # bool flag for on/off
 
 # function definitions
 
-def shut_down():
+def shut_down(): # shutdown for compiling to exe
     try:
         sys.exit()
     except:
@@ -85,7 +85,7 @@ def find_lowest_y(image, pt):
                 lowest_point = point
 
             # visual DEBUG
-            cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1) 
+            #cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1) 
 
     if lowest_point:
         return lowest_point
@@ -120,12 +120,9 @@ def find_closest_point(image, pt):
     '''
 
 
-# one-time start logic
-camera.start(region=region, target_fps=hz)
-
 
 while True:
-    if keyboard.is_pressed(aim_hotkey):
+    while win32api.GetAsyncKeyState(aim_hotkey) < 0:
         if not activated: # one-time logic
             activated = True
             print('activated')
@@ -152,6 +149,8 @@ while True:
 
             # visual DEBUG
             cv2.destroyAllWindows()
+        
+        time.sleep(0.1) # limits windows api calls
 
 
         # loop logic
