@@ -8,11 +8,12 @@ def run_aim():
 def run_trigger():
     trigger.send_bool()
 
-aim_process = multiprocessing.Process(target=run_aim)
-trigger_process = multiprocessing.Process(target=run_trigger)
+if __name__ == "__main__":
+    aim_process = multiprocessing.Process(target=run_aim)
+    trigger_process = multiprocessing.Process(target=run_trigger)
 
-aim_process.start()
-trigger_process.start()
+    aim_process.start()
+    trigger_process.start()
 
-aim_process.join()
-trigger_process.join()
+    aim_process.join()
+    trigger_process.join()

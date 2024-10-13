@@ -1,15 +1,15 @@
-import time
-import json
 import dxcam
 import numpy as np
 import cv2
 import scipy.spatial
-import serial
+
 import keyboard
 import win32api
-import winsound
 import sys
 from ctypes import WinDLL
+
+import time
+import json
 
 user32, shcore = (
     WinDLL("user32", use_last_error=True),
@@ -26,15 +26,9 @@ y_fov = 72
 lower = np.array([110, 20, 80], dtype='uint8') # color range for aim
 upper = np.array([250, 90, 250], dtype='uint8')
 
+aim_hotkey =  int("0x11",16) # ctrl key
 
-b, g, r = (250, 100, 250) # trigger color
-color_tolerance = 70 # for trigger mask
-
-
-aim_hotkey =  int("0x12",16)
-
-trigger_hotkey = 'mb5' 
-trigger_toggle = False # switch between toggle and hold modes
+# alt key: "0x12"
 
 quit_key = 'q' # keybind for quitting program
 
@@ -116,6 +110,7 @@ def find_closest_point(image, pt):
     '''
 
 
+
 def send_coordinates():
     activated = False # bool flag for on/off
     while True:
@@ -124,10 +119,8 @@ def send_coordinates():
                 activated = True
                 print('activated')
 
-
             # loop logic
             image = camera.get_latest_frame()
-
             lowest_point = find_lowest_y(image, pt)
 
             # visual DEBUG
@@ -160,10 +153,6 @@ def send_coordinates():
 
 
                 break
-
-
-        #image = camera.grab(region=region)
-        #image = cv2.cvtColor(np.array(temp), cv2.COLOR_RGB2BGR)
 
 if __name__ == "__main__":
     send_coordinates()
