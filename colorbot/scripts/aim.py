@@ -1,26 +1,24 @@
 import time
-import keyboard
 import json
-import threading
-
 import dxcam
 import numpy as np
 import cv2
 import scipy.spatial
 import serial
-
+import keyboard
 import win32api
 import winsound
 import sys
 from ctypes import WinDLL
 
-user32, kernel32, shcore = (
+user32, shcore = (
     WinDLL("user32", use_last_error=True),
-    WinDLL("kernel32", use_last_error=True),
     WinDLL("shcore", use_last_error=True),
 )
 
 # config - link w/ userinput GUI or .json
+
+hz = 120
 
 x_fov = 128
 y_fov = 72
@@ -53,10 +51,8 @@ region = ((xres//2)-x_fov, (yres//2)-y_fov, (xres//2)+x_fov, (yres//2)+y_fov)
 # initalization
 
 camera = dxcam.create(output_color='BGR', max_buffer_len=64)
-hz = 60
 camera.start(region=region, target_fps=hz)
 
-activated = False # bool flag for on/off
 
 # function definitions
 
@@ -104,7 +100,7 @@ def find_closest_point(image, pt):
             close_points.append((round(x1 + (w1 / 2)), round(y1 + (h1 / 2))))
 
             # for visual debugging:
-            cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1) 
+            #cv2.rectangle(image, (x1, y1), (x1+w1, y1+h1), (255, 255, 255), 1) 
 
     if close_points:
         closest = close_points[scipy.spatial.KDTree(close_points).query(pt)[1]]
@@ -120,48 +116,54 @@ def find_closest_point(image, pt):
     '''
 
 
+def send_coordinates():
+    activated = False # bool flag for on/off
+    while True:
+        while win32api.GetAsyncKeyState(aim_hotkey) < 0:
+            if not activated: # one-time logic
+                activated = True
+                print('activated')
 
-while True:
-    while win32api.GetAsyncKeyState(aim_hotkey) < 0:
-        if not activated: # one-time logic
-            activated = True
-            print('activated')
 
+            # loop logic
+            image = camera.get_latest_frame()
 
-        # loop logic
-        image = camera.get_latest_frame()
-
-        lowest_point = find_lowest_y(image, pt)
-
-        # visual DEBUG
-        if lowest_point is not None:
-            cv2.circle(image, (lowest_point[0], lowest_point[1]), radius=2, color=(255, 255, 255), thickness=-1)
-            cv2.line(image, pt, (lowest_point[0], lowest_point[1]), (255, 255, 255), 1) 
-        resize = cv2.resize(image, (960, 540))
-        cv2.imshow('Real-Time Color Detection', resize)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    else:
-        if activated: # one-time logic
-            activated = False
-            print('deactivated')
+            lowest_point = find_lowest_y(image, pt)
 
             # visual DEBUG
-            cv2.destroyAllWindows()
-        
-        time.sleep(0.1) # limits windows api calls
+            """
+            if lowest_point is not None:
+                cv2.circle(image, (lowest_point[0], lowest_point[1]), radius=2, color=(255, 255, 255), thickness=-1)
+                cv2.line(image, pt, (lowest_point[0], lowest_point[1]), (255, 255, 255), 1) 
+            resize = cv2.resize(image, (960, 540))
+            cv2.imshow('Real-Time Color Detection', resize)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+            """
+
+        else:
+            if activated: # one-time logic
+                activated = False
+                print('deactivated')
+
+                # visual DEBUG
+                cv2.destroyAllWindows()
+            
+            time.sleep(0.1) # limits windows api calls
 
 
-        # loop logic
-        if keyboard.is_pressed(quit_key):
-            print(f'{quit_key} was pressed: shutting down') # one-time quit logic
+            # loop logic
+            if keyboard.is_pressed(quit_key):
+                print(f'{quit_key} was pressed: shutting down') # one-time quit logic
 
-            camera.stop()
+                camera.stop()
 
 
-            break
+                break
 
 
         #image = camera.grab(region=region)
         #image = cv2.cvtColor(np.array(temp), cv2.COLOR_RGB2BGR)
+
+if __name__ == "__main__":
+    send_coordinates()
