@@ -5,11 +5,20 @@ import keyboard
 import win32api
 import sys
 from ctypes import WinDLL
+import socket
 
-import winsound
 import time
-import json
 import random
+
+SERVER_IP = '192.168.1.158'  # rpi IP address
+SERVER_PORT = 5005
+
+def send_key_status(key_pressed):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((SERVER_IP, SERVER_PORT))
+        message = "True" if key_pressed else "False"
+        s.sendall(message.encode())
+        print(f"Sent key status: {message}")
 
 user32, shcore = (
     WinDLL("user32", use_last_error=True),
@@ -69,8 +78,9 @@ def send_bool():
             target_rgb_vals = rgb_vals[mask]
             if len(target_rgb_vals) > 0:
                 time.sleep(0.01)
-                keyboard.press_and_release(";")
-                print('trigger')
+                # method 1: keyboard.press_and_release(";")
+                # method 2
+                send_key_status(True)
                 random_sleep = random.uniform(0.08, 0.14)
                 time.sleep(random_sleep)
         else:
