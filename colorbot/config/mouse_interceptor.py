@@ -8,14 +8,17 @@ HID_DEV = '/dev/hidg0'
 
 # TCP server settings
 HOST = ''  # accept connections from any IP address
-PORT = 5005
+PORT = 5005 # listen on port 5005
 
 # find the physical mouse input device on the pi
 def find_mouse():
     devices = [InputDevice(path) for path in evdev.list_devices()]
+    debug = []
     for device in devices:
-        if 'HID-compliant mouse' in device.name: 
+        debug.append(device.name)
+        if 'Glorious Model D Wireless' in device.name: 
             return device
+    print(debug)
     return None
 
 
@@ -24,9 +27,9 @@ def send_hid_report(report):
         fd.write(report)
 
 # HID report
-def create_hid_report(x, y, btn1=0):
-    buttons = btn1 & 0x01  # Only LMB
-    return bytes([buttons, x & 0xff, y & 0xff, 0])
+def create_hid_report(x, y, scroll=0, btn1=0, btn2=0, btn3=0, btn4=0, btn5=0):
+    buttons = (btn1 << 0) | (btn2 << 1) | (btn3 << 2) | (btn4 << 3) | (btn5 << 4)
+    return bytes([buttons, x & 0xff, y & 0xff, scroll & 0xff])
 
 # mouse forwarding and click interception
 def handle_mouse_input(mouse, click_override=False):

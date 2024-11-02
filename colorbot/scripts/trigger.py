@@ -65,6 +65,7 @@ def send_bool():
         while win32api.GetAsyncKeyState(trigger_hotkey) < 0:
             if not activated: # one time logic
                 activated = True
+                print('activated')
             try:
                 image = camera.get_latest_frame()
             except:
@@ -81,11 +82,15 @@ def send_bool():
                 # method 1: keyboard.press_and_release(";")
                 # method 2
                 send_key_status(True)
+
+                #debug
+                print('click')
                 random_sleep = random.uniform(0.08, 0.14)
                 time.sleep(random_sleep)
         else:
             if activated:
                 activated = False
+                print('deactivated')
             time.sleep(0.1)
 
             if keyboard.is_pressed(quit_key):
