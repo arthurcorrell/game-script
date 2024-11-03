@@ -58,7 +58,6 @@ def shut_down(): # shutdown for compiling to exe
         sys.exit()
     except:
         raise SystemExit
-
 def send_bool():
     activated = False # boolean flag for one-time logic
     while True:
@@ -78,15 +77,14 @@ def send_bool():
             )
             target_rgb_vals = rgb_vals[mask]
             if len(target_rgb_vals) > 0:
-                time.sleep(0.01)
                 # method 1: keyboard.press_and_release(";")
                 # method 2
                 send_key_status(True)
 
                 #debug
                 print('click')
-                random_sleep = random.uniform(0.08, 0.14)
-                time.sleep(random_sleep)
+            else:
+                send_key_status(False)
         else:
             if activated:
                 activated = False
