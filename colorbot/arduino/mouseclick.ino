@@ -1,1 +1,0 @@
-# boolean from trigger.py
